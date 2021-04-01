@@ -1,13 +1,13 @@
-from rest_framework.viewsets import ModelViewSet, ViewSetMixin
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework import filters, generics
-from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.viewsets import ModelViewSet, ViewSetMixin
 
-from .models import Comment, Group, Post, Follow
+from .models import Comment, Follow, Group, Post
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (CommentSerializer, GroupSerializer, PostSerializer,
-                          FollowSerializer)
+from .serializers import (CommentSerializer, FollowSerializer, GroupSerializer,
+                          PostSerializer)
 
 
 class PostViewSet(ModelViewSet):
@@ -41,16 +41,19 @@ class GroupViewSet(ViewSetMixin, generics.ListCreateAPIView):
     """Использую миксины чтобы ограничить класс"""
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [IsAuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
 
 class FollowViewSet(ViewSetMixin, generics.ListCreateAPIView):
     """Использую миксины чтобы ограничить класс"""
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
     filter_backends = [filters.SearchFilter]
-    search_fields = ['=user__username', '=author__username']
+    search_fields = ['user__username', 'following__username']
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        user = self.request.user
+        return user.following.all()

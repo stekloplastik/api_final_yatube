@@ -34,8 +34,8 @@ class Comment(models.Model):
 
 class Group(models.Model):
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
-    description = models.TextField(max_length=500)
+    slug = models.SlugField(blank=True)
+    description = models.TextField(max_length=500, blank=True)
 
     def __str__(self):
         return self.title
@@ -44,13 +44,13 @@ class Group(models.Model):
 class Follow(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE,
                              related_name='follower')
-    author = models.ForeignKey(User, on_delete=models.CASCADE,
-                               related_name='following')
+    following = models.ForeignKey(User, on_delete=models.CASCADE,
+                                  related_name='following')
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author', ],
+                fields=['user', 'following', ],
                 name='unique_follows',
             )
         ]
